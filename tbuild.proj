@@ -1,0 +1,11 @@
+tm "dsl" {
+	files {
+		*.tcl
+	}
+
+	version "0.1"
+
+	platform tcl
+}
+
+# vim: ft=tcl
