@@ -19,16 +19,21 @@ proc dsl::decomment {in} { #<<<
 proc dsl::dsl_eval {interp dsl_commands dsl_script args} { #<<<
 	set aliases_old	{}
 	foreach {cmdname cmdargs cmdbody} [dsl::decomment $dsl_commands] {
-		dict set aliases_old $cmdname [$interp alias $cmdname]
+		set alias	[interp alias $interp $cmdname]
+		if {$alias eq ""} {
+			dict set aliases_old $cmdname [list {}]
+		} else {
+			dict set aliases_old $cmdname [list [interp target $interp $cmdname] $alias]
+		}
 
-		$interp alias $cmdname apply [list $cmdargs $cmdbody [uplevel {namespace current}]] {*}$args
+		interp alias $interp $cmdname {} apply [list $cmdargs $cmdbody [uplevel {namespace current}]] {*}$args
 	}
 
 	try {
-		$interp eval $dsl_script
+		interp eval $interp $dsl_script
 	} finally {
 		dict for {cmdname oldalias} $aliases_old {
-			$interp alias $cmdname $oldalias
+			interp alias $interp $cmdname {*}$oldalias
 		}
 	}
 }
