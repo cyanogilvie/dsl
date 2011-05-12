@@ -1,9 +1,9 @@
-tm "dsl" {
+tm dsl {
+	version 0.4
+
 	files {
 		*.tcl
 	}
-
-	version 0.3
 
 	platform tcl
 }
