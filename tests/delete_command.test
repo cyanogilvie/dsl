@@ -1,0 +1,102 @@
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
+
+source dsl.tcl; package provide dsl 0.5
+
+test delete_command-1.1.1 {Gracefully handle DSL command being deleted by the script, no shadowing, interp} -setup { #<<<
+	set interp	[interp create]
+} -body {
+	set res	{}
+	lappend res	[info commands ::foo]
+	lappend res {*}[dsl::dsl_eval $interp {
+		foo {} {return dsl}
+	} {
+		set dsl_res	{}
+		lappend dsl_res [info commands ::foo]
+		lappend dsl_res	[foo]
+		rename ::foo {}
+		lappend dsl_res [info commands ::foo]
+	}]
+	lappend res	[info commands ::foo]
+	set res
+} -cleanup {
+	interp delete $interp
+	unset -nocomplain res interp
+} -result {{} ::foo dsl {} {}}
+#>>>
+test delete_command-1.1.2 {Gracefully handle DSL command being deleted by the script, shadowing, interp} -setup { #<<<
+	set interp	[interp create]
+	proc foo {} {return global}
+} -body {
+	set res	{}
+	lappend res	[info commands ::foo]
+	lappend res {*}[dsl::dsl_eval $interp {
+		foo {} {return dsl}
+	} {
+		set dsl_res	{}
+		lappend dsl_res [info commands ::foo]
+		lappend dsl_res	[foo]
+		rename ::foo {}
+		lappend dsl_res [info commands ::foo]
+	}]
+	lappend res	[info commands ::foo]
+	lappend res	[foo]
+	set res
+} -cleanup {
+	interp delete $interp
+	unset -nocomplain res interp
+	rename :::foo {}
+} -result {::foo ::foo dsl {} ::foo global}
+#>>>
+test delete_command-1.2.1 {Gracefully handle DSL command being deleted by the script, no shadowing, no interp} -setup { #<<<
+	catch {rename ::foo {}}
+} -body {
+	set res	{}
+	lappend res	[info commands ::foo]
+	lappend res {*}[dsl::dsl_eval {} {
+		foo {} {return dsl}
+	} {
+		set dsl_res	{}
+		lappend dsl_res [info commands ::foo]
+		lappend dsl_res	[foo]
+		rename ::foo {}
+		lappend dsl_res [info commands ::foo]
+	}]
+	lappend res	[info commands ::foo]
+	set res
+} -cleanup {
+	unset -nocomplain res
+	catch {rename ::foo {}}
+} -result {{} ::foo dsl {} {}}
+#>>>
+test delete_command-1.2.2 {Gracefully handle DSL command being deleted by the script, shadowing, no interp} -setup { #<<<
+	proc foo {} {return global}
+} -body {
+	set res	{}
+	lappend res	[info commands ::foo]
+	lappend res {*}[dsl::dsl_eval {} {
+		foo {} {return dsl}
+	} {
+		set dsl_res	{}
+		lappend dsl_res [info commands ::foo]
+		lappend dsl_res	[foo]
+		rename ::foo {}
+		lappend dsl_res [info commands ::foo]
+	}]
+	lappend res	[info commands ::foo]
+	lappend res	[foo]
+	set res
+} -cleanup {
+	unset -nocomplain res
+	catch {rename :::foo {}}
+} -result {::foo ::foo dsl {} ::foo global}
+#>>>
+
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+# vim: ft=tcl foldmethod=marker foldmarker=<<<,>>> ts=4 shiftwidth=4

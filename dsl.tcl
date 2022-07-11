@@ -26,7 +26,7 @@ proc dsl::dsl_eval {interp dsl_commands dsl_script args} { #<<<
 	set tmpns		::_dsl_[incr ::dsl::seq]
 	set cmds		{}
 	try {
-		interp eval $interp [format {namespace eval %s {}} [list $tmpns]]
+		interp eval $interp [list namespace eval $tmpns {}]
 		foreach {cmdname cmdargs cmdbody} [dsl::decomment $dsl_commands] {
 			if {$cmdname in {if info rename apply foreach namespace}} {
 				error "\"$cmdname\" is a reserved word and cannot be used for a DSL command"
@@ -59,7 +59,8 @@ proc dsl::dsl_eval {interp dsl_commands dsl_script args} { #<<<
 		interp eval $interp [format {
 			apply {{} {
 				foreach cmd %2$s {
-					rename ::$cmd {}
+					catch {rename ::$cmd {}}
+					#rename ::$cmd {}
 					if {[info commands %1$s::$cmd] ne ""} {
 						rename %1$s::$cmd ::$cmd
 					}

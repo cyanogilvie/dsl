@@ -16,7 +16,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import ::tcltest::*
 }
 
-package require dsl
+source dsl.tcl; package provide dsl 0.5
 
 test dsl_obj_eval-1.1 {Evaluate DSL commands in an object context} -setup { #<<<
 	oo::class create Foo {
